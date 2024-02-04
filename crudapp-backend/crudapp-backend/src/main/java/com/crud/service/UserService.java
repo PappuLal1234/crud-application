@@ -1,9 +1,11 @@
 package com.crud.service;
 
 import com.crud.entities.User;
+import com.crud.exception.ResourceAlreadyExistException;
+import com.crud.exception.UserNotFoundException;
 import com.crud.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,17 +15,16 @@ import java.util.Optional;
 public class UserService {
     @Autowired
     private UserRepository userRepository;
-//    @Autowired
-//    private BCryptPasswordEncoder passwordEncoder;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
-    public User registerUser(User user) throws IllegalAccessException {
-        Optional<User>existingUser=userRepository.findByEmail(user.getEmail());
-        if(existingUser.isPresent())
+    public User registerUser(User user)  {
+        if(userRepository.findByEmail(user.getEmail()).isPresent())
         {
-            throw new IllegalAccessException("Email address already exists");
+            throw new ResourceAlreadyExistException(user.getEmail());
         }
-        //String hashedPassword=passwordEncoder.encode(user.getPassword());
-       // user.setPassword(hashedPassword);
+        String hashedPassword=passwordEncoder.encode(user.getPassword());
+        user.setPassword(hashedPassword);
         return userRepository.save(user);
     }
     public Optional<User>getUserByEmail(String email)
@@ -32,6 +33,10 @@ public class UserService {
     }
     public Optional<User>getUserById(String id)
     {
+        if(!userRepository.findById(id).isPresent())
+        {
+            throw new UserNotFoundException(id);
+        }
         return userRepository.findById(id);
     }
     public void updateUser(User user)

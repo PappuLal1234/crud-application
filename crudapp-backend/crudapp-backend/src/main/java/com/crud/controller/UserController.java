@@ -6,6 +6,7 @@ import com.crud.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,35 +19,9 @@ import java.util.Optional;
 public class UserController {
     @Autowired
     private UserService userService;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
-    @PostMapping("/login")
-    public ResponseEntity<?>loginUser(@RequestBody Map<String,String>loginRequest)
-    {
-        String email=loginRequest.get("email");
-        String password=loginRequest.get("password");
-        Optional<User>userOptional=userService.getUserByEmail(email);
-        if(userOptional.isPresent())
-        {
-            User user=userOptional.get();
-            if(user.getPassword().equals(password))
-            {
-                return ResponseEntity.ok("Login successfully");
-            }
-            else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Incorrect password");
-            }
-        }
-        else
-        {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
-        }
-    }
-
-    @PostMapping("/register")
-    public ResponseEntity<?>registerUser(@RequestBody User user) throws IllegalAccessException {
-        User newUser=userService.registerUser(user);
-        return ResponseEntity.ok(newUser);
-    }
     @GetMapping("/{userId}")
     public User getUserById(@PathVariable String userId)
     {
@@ -60,7 +35,7 @@ public class UserController {
         return ResponseEntity.ok(listOfUsers);
     }
 
-    @PutMapping("/{userId}")
+    @PutMapping("/update/{userId}")
     public String updateUser(@PathVariable("userId") String userId,@RequestBody User user)
     {
         Optional<User> userOptional=userService.getUserById(userId);
@@ -73,10 +48,9 @@ public class UserController {
             userService.updateUser(user);
             return ("User updated successfully");
 
-        //else throw new UserNotFoundException(userId);
     }
 
-    @DeleteMapping("/{userId}")
+    @DeleteMapping("/remove/{userId}")
     public String deleteUser(@PathVariable String userId)
     {
         Optional<User>userOptional=userService.getUserById(userId);
